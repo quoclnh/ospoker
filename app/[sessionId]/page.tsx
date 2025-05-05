@@ -18,28 +18,27 @@ export default function SessionPage() {
   const params = useParams()
   const sessionId = params.sessionId as string
   const store = useStore()
-  const session = store.sessions[sessionId]
   const [name, setName] = useState('')
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [showJoinDialog, setShowJoinDialog] = useState(true)
 
   useEffect(() => {
-    if (!session) {
-      store.createSession(sessionId)
+    if (!store.session) {
+      store.createSession()
     }
-  }, [sessionId, session, store])
+  }, [store])
 
   const handleJoin = () => {
     if (name.trim()) {
       store.setUserName(name)
-      store.joinSession(sessionId, name)
+      store.joinSession(name)
       setShowJoinDialog(false)
     }
   }
 
   const handleCreateTask = () => {
     if (newTaskTitle.trim()) {
-      store.createTask(sessionId, newTaskTitle)
+      store.createTask(newTaskTitle)
       setNewTaskTitle('')
     }
   }
@@ -53,10 +52,10 @@ export default function SessionPage() {
     return Math.abs(vote - average) > average * 0.5
   }
 
-  if (!session) return null
+  if (!store.session) return null
 
-  const isFacilitator = session.facilitatorId === store.userId
-  const currentTask = session.currentTask
+  const isFacilitator = store.session.facilitatorId === store.userId
+  const currentTask = store.session.currentTask
   const hasVoted = currentTask?.votes.some(v => v.userId === store.userId)
   const allVotes = currentTask?.votes.map(v => v.value).filter((v): v is number => v !== null) || []
   const average = calculateAverage(allVotes)
@@ -84,8 +83,8 @@ export default function SessionPage() {
         <div className="lg:col-span-3 space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Planning Poker</h1>
-            {!session.facilitatorId && (
-              <Button onClick={() => store.becomeFacilitator(sessionId)}>
+            {!store.session.facilitatorId && (
+              <Button onClick={() => store.becomeFacilitator()}>
                 <Crown className="mr-2 h-4 w-4" />
                 Become Facilitator
               </Button>
@@ -114,14 +113,14 @@ export default function SessionPage() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => store.resetVoting(sessionId)}>
+                          <AlertDialogAction onClick={() => store.resetVoting()}>
                             Reset
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                     
-                    <Button onClick={() => store.revealVotes(sessionId)}>
+                    <Button onClick={() => store.revealVotes()}>
                       <Eye className="mr-2 h-4 w-4" />
                       Reveal
                     </Button>
@@ -140,7 +139,7 @@ export default function SessionPage() {
                         ? 'border-primary bg-primary/10'
                         : 'border-border'
                     } flex items-center justify-center text-2xl font-bold cursor-pointer`}
-                    onClick={() => !currentTask.revealed && store.vote(sessionId, number)}
+                    onClick={() => !currentTask.revealed && store.vote(number)}
                     disabled={currentTask.revealed}
                   >
                     {number}
@@ -157,7 +156,7 @@ export default function SessionPage() {
                   <h3 className="text-lg font-semibold mb-2">Results</h3>
                   <div className="space-y-2">
                     {currentTask.votes.map((vote) => {
-                      const participant = session.participants.find(p => p.id === vote.userId)
+                      const participant = store.session.participants.find(p => p.id === vote.userId)
                       if (!participant || vote.value === null) return null
                       
                       return (
@@ -217,13 +216,13 @@ export default function SessionPage() {
             </div>
             <ScrollArea className="h-[200px]">
               <div className="space-y-2">
-                {session.participants.map((participant) => (
+                {store.session.participants.map((participant) => (
                   <div
                     key={participant.id}
                     className="flex items-center justify-between p-2 rounded bg-muted"
                   >
                     <span>{participant.name}</span>
-                    {participant.id === session.facilitatorId && (
+                    {participant.id === store.session.facilitatorId && (
                       <Crown className="h-4 w-4 text-yellow-500" />
                     )}
                   </div>
@@ -237,11 +236,11 @@ export default function SessionPage() {
               <h2 className="font-semibold mb-4">Previous Tasks</h2>
               <ScrollArea className="h-[400px]">
                 <div className="space-y-2">
-                  {session.tasks.map((task) => (
+                  {store.session.tasks.map((task) => (
                     <div
                       key={task.id}
                       className="p-2 rounded bg-muted cursor-pointer hover:bg-accent"
-                      onClick={() => store.selectTask(sessionId, task.id)}
+                      onClick={() => store.selectTask(task.id)}
                     >
                       <div className="font-medium">{task.title}</div>
                       {task.finalEstimate && (
