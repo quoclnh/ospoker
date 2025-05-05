@@ -153,7 +153,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-semibold mb-2">Results</h3>
                   <div className="space-y-2">
                     {currentTask.votes.map((vote) => {
-                      const participant = store.session.participants.find(p => p.id === vote.userId)
+                      const participant = store.session?.participants.find(p => p.id === vote.userId)
                       if (!participant || vote.value === null) return null
                       
                       return (

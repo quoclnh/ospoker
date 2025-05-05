@@ -74,12 +74,16 @@ export const useStore = create<Store>((set) => ({
     }
   }),
 
-  becomeFacilitator: () => set((state) => ({
-    session: state.session ? {
-      ...state.session,
-      facilitatorId: state.userId
-    } : null
-  })),
+  becomeFacilitator: () => set((state) => {
+    if (!state.session) return state
+
+    return {
+      session: {
+        ...state.session,
+        facilitatorId: state.userId
+      }
+    }
+  }),
 
   vote: (value) => set((state) => {
     if (!state.session?.currentTask) return state
